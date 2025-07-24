@@ -3,12 +3,6 @@ const raylib = @cImport({
     @cInclude("raylib.h");
 });
 
-const Ball = struct {
-    position: raylib.Vector2,
-    radius: f32,
-    color: raylib.Color,
-};
-
 const Bar = struct {
     position: raylib.Vector2,
     width: f32,
@@ -16,53 +10,71 @@ const Bar = struct {
     color: raylib.Color,
 };
 
-const Rectangle = struct {
-    identifier: i32,
+const Ball = struct {
+    position: raylib.Vector2,
+    radius: f32,
+    color: raylib.Color,
+};
+
+const Brick = struct {
     position: raylib.Vector2,
     width: f32,
     height: f32,
     color: raylib.Color,
+    is_active: bool,
 };
 
-pub fn main() !void {
-    const screenWidth: i32 = 800;
-    const screenHeight: i32 = 450;
+var ball_speed: raylib.Vector2 = .{ .x = 5.0, .y = 4.0 };
 
-    raylib.InitWindow(screenWidth, screenHeight, "breakout");
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
+
+const BRICK_COUNT = 40;
+const BRICK_WIDTH = 50;
+const BRICK_HEIGHT = 20;
+
+const BRICK_POS_X = 120;
+const BRICK_POS_Y = 40;
+
+pub fn main() !void {
+    raylib.InitWindow(WIDTH, HEIGHT, "breakout");
 
     raylib.SetTargetFPS(60);
 
-    const ball: Ball = .{
-        .position = .{ .x = screenWidth / 2, .y = 330 },
-        .radius = 20.0,
-        .color = raylib.WHITE,
-    };
-
     const bar: Bar = .{
-        .position = .{ .x = screenWidth / 2 - 60, .y = 350 },
-        .width = 120.0,
+        .position = .{ .x = WIDTH / 2 - 50, .y = HEIGHT - 100 },
+        .width = 100.0,
         .height = 20.0,
         .color = raylib.GREEN,
     };
 
+    const ball: Ball = .{
+        .position = .{ .x = WIDTH / 2, .y = HEIGHT - 125 },
+        .radius = 10.0,
+        .color = raylib.WHITE,
+    };
+
     const allocator = std.heap.page_allocator;
-    const rectangles = try create_rectangles(allocator);
-    defer rectangles.deinit();
+    const bricks = try create_rectangles(allocator);
+    defer bricks.deinit();
 
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
         raylib.ClearBackground(raylib.BLACK);
 
-        for (rectangles.items) |rectangle| {
-            const p_x: i32 = @intFromFloat(rectangle.position.x);
-            const p_y: i32 = @intFromFloat(rectangle.position.y);
-            const p_width: i32 = @intFromFloat(rectangle.width);
-            const p_height: i32 = @intFromFloat(rectangle.height);
-            raylib.DrawRectangle(p_x, p_y, p_width, p_height, rectangle.color);
+        for (bricks.items) |brick| {
+            const p_x: i32 = @intFromFloat(brick.position.x);
+            const p_y: i32 = @intFromFloat(brick.position.y);
+            const p_width: i32 = @intFromFloat(brick.width);
+            const p_height: i32 = @intFromFloat(brick.height);
+
+            if (brick.is_active) {
+                raylib.DrawRectangle(p_x, p_y, p_width, p_height, brick.color);
+            }
         }
 
-        raylib.DrawCircle(ball.position.x, ball.position.y, ball.radius, ball.color);
+        raylib.DrawCircleV(ball.position, ball.radius, ball.color);
 
         raylib.DrawRectangle(bar.position.x, bar.position.y, bar.width, bar.height, bar.color);
 
@@ -72,55 +84,50 @@ pub fn main() !void {
     raylib.CloseWindow();
 }
 
-fn create_rectangles(allocator: std.mem.Allocator) !std.ArrayList(Rectangle) {
-    var rectangles = std.ArrayList(Rectangle).init(allocator);
+fn create_rectangles(allocator: std.mem.Allocator) !std.ArrayList(Brick) {
+    var rectangles = std.ArrayList(Brick).init(allocator);
 
-    var width_position: f32 = 100.0;
-    const height_position = 50;
-    const rectangle_width = 50;
-    const rectangle_height = 25;
+    var initial_position: f32 = 0.0;
 
-    for (0..10) |i| {
-        const id: i32 = @intCast(i);
-
-        const rectangle_orange: Rectangle = .{
-            .identifier = id,
-            .position = .{ .x = width_position, .y = height_position },
-            .width = rectangle_width,
-            .height = rectangle_height,
+    for (0..10) |_| {
+        const orange_brick: Brick = .{
+            .position = .{ .x = BRICK_POS_X + initial_position, .y = BRICK_POS_Y },
+            .width = BRICK_WIDTH,
+            .height = BRICK_HEIGHT,
             .color = raylib.ORANGE,
+            .is_active = true,
         };
 
-        const rectangle_pink: Rectangle = .{
-            .identifier = id + 10,
-            .position = .{ .x = width_position, .y = height_position + 40 },
-            .width = rectangle_width,
-            .height = rectangle_height,
+        const pink_brick: Brick = .{
+            .position = .{ .x = BRICK_POS_X + initial_position, .y = BRICK_POS_Y + 40 },
+            .width = BRICK_WIDTH,
+            .height = BRICK_HEIGHT,
             .color = raylib.PINK,
+            .is_active = true,
         };
 
-        const rectangle_purple: Rectangle = .{
-            .identifier = id + 20,
-            .position = .{ .x = width_position, .y = height_position + 80 },
-            .width = rectangle_width,
-            .height = rectangle_height,
+        const purple_brick: Brick = .{
+            .position = .{ .x = BRICK_POS_X + initial_position, .y = BRICK_POS_Y + 80 },
+            .width = BRICK_WIDTH,
+            .height = BRICK_HEIGHT,
             .color = raylib.PURPLE,
+            .is_active = true,
         };
 
-        const rectangle_red: Rectangle = .{
-            .identifier = id + 30,
-            .position = .{ .x = width_position, .y = height_position + 120 },
-            .width = rectangle_width,
-            .height = rectangle_height,
+        const red_brick: Brick = .{
+            .position = .{ .x = BRICK_POS_X + initial_position, .y = BRICK_POS_Y + 120 },
+            .width = BRICK_WIDTH,
+            .height = BRICK_HEIGHT,
             .color = raylib.RED,
+            .is_active = true,
         };
 
-        try rectangles.append(rectangle_orange);
-        try rectangles.append(rectangle_pink);
-        try rectangles.append(rectangle_purple);
-        try rectangles.append(rectangle_red);
+        try rectangles.append(orange_brick);
+        try rectangles.append(pink_brick);
+        try rectangles.append(purple_brick);
+        try rectangles.append(red_brick);
 
-        width_position += 60;
+        initial_position += 60;
     }
 
     return rectangles;
