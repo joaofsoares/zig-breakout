@@ -24,19 +24,12 @@ const Brick = struct {
     is_active: bool,
 };
 
-var ball_speed: raylib.Vector2 = .{ .x = 5.0, .y = 4.0 };
-
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
-
-const BRICK_COUNT = 40;
-const BRICK_WIDTH = 50;
-const BRICK_HEIGHT = 20;
-
-const BRICK_POS_X = 120;
-const BRICK_POS_Y = 40;
-
 pub fn main() !void {
+    const WIDTH: u32 = 800;
+    const HEIGHT: u32 = 600;
+
+    var ball_speed: raylib.Vector2 = .{ .x = 5.0, .y = 4.0 };
+
     raylib.InitWindow(WIDTH, HEIGHT, "breakout");
 
     raylib.SetTargetFPS(60);
@@ -58,6 +51,7 @@ pub fn main() !void {
     const bricks = try create_rectangles(allocator);
     defer bricks.deinit();
 
+    const BRICK_COUNT = 40;
     var start_pressed = false;
     var win = false;
     var remaining_bricks: u32 = BRICK_COUNT;
@@ -148,6 +142,11 @@ pub fn main() !void {
 }
 
 fn create_rectangles(allocator: std.mem.Allocator) !std.ArrayList(Brick) {
+    const BRICK_WIDTH = 50;
+    const BRICK_HEIGHT = 20;
+
+    const BRICK_POS_X = 120;
+    const BRICK_POS_Y = 40;
     var rectangles = std.ArrayList(Brick).init(allocator);
 
     var initial_position: f32 = 0.0;
