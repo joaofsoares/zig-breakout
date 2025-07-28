@@ -1,1 +1,3 @@
-zig build run
+# RUN
+
+```zig build run```
